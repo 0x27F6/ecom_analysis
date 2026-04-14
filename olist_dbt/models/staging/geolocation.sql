@@ -2,7 +2,7 @@ with
 
 source as(
     select *
-    from {{ref('olist_geolocation_dataset')}}
+    from {{source('olist', 'geolocation')}}
 )
 
 select 
@@ -12,3 +12,4 @@ select
     geolocation_city as city,
     geolocation_state as state
 from source
+

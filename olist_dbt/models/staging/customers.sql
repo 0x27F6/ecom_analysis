@@ -2,7 +2,7 @@ with
 
 source as(
     select *
-    from {{ref('olist_customers_dataset')}}
+    from {{source('olist', 'customers')}}
 )
 
 select 
