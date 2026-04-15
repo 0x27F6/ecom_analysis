@@ -3,3 +3,10 @@ target/
 dbt_packages/
 logs/
 dbt_internal_packages/
+analyses/
+.DS_Store
+logs/
+target/
+.venv/
+env/
+data/
