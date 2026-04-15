@@ -1,51 +1,82 @@
-with order_items as (
-    select * from {{ ref('stg_order_items') }}
+/* 
+int_orders_enriched
+--------------------------------
+order_id
+customer_id
+order_status
+ordered_at
+
+-- payment signals
+total_paid
+payment_method
+payment_count
+
+-- review signals
+review_score
+is_negative_review
+
+-- delivery signals (later)
+delivery_days
+is_late_delivery
+*/
+
+with orders as(
+    select 
+        order_id,
+        customer_id,
+        status,
+        purchase_timestamp,
+        approved_at,
+        delivered_carrier_date,
+        customer_delivery_date,
+        estimated_delivery
+    from {{ref('stg_orders')}}
 ),
 
-orders as (
-    select * from {{ ref('stg_orders') }}
+reviews as(
+    select 
+        review_id,
+        order_id,
+        review_score,
+        review_comment_title,
+        review_comment_message,
+        review_creation_date,
+        reviewed_at
+    from {{ref('int_order_reviews')}}
 ),
 
-reviews as (
-    select * from {{ ref('stg_order_reviews') }}
-),
-
-payments as (
-    -- if you want AOV or payment method mix later
-    select * from {{ ref('stg_payments') }}
+payments as(
+    select 
+        order_id,
+        payment_count,
+        total_paid,
+        primary_payment_type,   
+        payment_method
+    from {{ref('int_order_payments')}}
 )
 
-select
-    -- ids
-    oi.order_id,
-    oi.order_item_id,
-    oi.product_id,
-    oi.seller_id,
+select 
+    o.order_id,
     o.customer_id,
-    
-    -- dates
-    o.ordered_at,
-    o.delivered_at,
-    date_diff('day', o.purchase_timestamp, o.customer_delivery_date) as days_to_deliver,
-    date_diff('day', o.purchase_timestamp, o.estimated_delivery) as promised_delivery_days,
-    date_diff('day', o.purchase_timestamp, o.delivered_carrier_date) as time_to_carrier, -- can be used to help determine where supply chain bottle necks occur
-    date_diff('day', o.delivered_carrier_date, o.customer_delivery_date) as time_carrier_to_customer,
+    o.status as order_status,
+    o.purchase_timestamp as ordered_at,
 
-    -- money
-    oi.item_price,
-    oi.freight_cost,
-    oi.item_price + oi.freight_cost as gross_revenue,
-    
-    -- satisfaction
+    --payments 
+    p.payment_count,
+    p.total_paid,
+    p.primary_payment_type,
+    p.payment_method,
+
+    -- reviews
     r.review_score,
-    r.review_comment_message,
-    
-    -- flags
-    o.order_status,
-    case when o.delivered_at > o.estimated_delivery_at then 1 else 0 end as is_late_delivery,
-    case when r.review_score <= 3 then 1 else 0 end as is_negative_review
+    case when r.review_score <= 3 then 1 else 0 end as is_negative_review,
 
-from order_items oi
-left join orders o on oi.order_id = o.order_id
-left join reviews r on oi.order_id = r.order_id 
+    --deliveries,
+    timestamp_diff(o.customer_delivery_date, o.purchase_timestamp, DAY) as days_to_delivery,
+    timestamp_diff(o.estimated_delivery, o.purchase_timestamp, DAY) as estimated_delivery_days,
+    timestamp_diff(o.delivered_carrier_date, o.purchase_timestamp, DAY) as days_to_carrier,
+    timestamp_diff(o.customer_delivery_date, o.delivered_carrier_date, DAY) as days_carrier_to_customer 
+from orders o
+left join payments p on o.order_id = p.order_id
+left join reviews r on r.order_id = o.order_id
 
