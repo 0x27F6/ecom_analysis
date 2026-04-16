@@ -15,9 +15,6 @@ payment_count
 review_score
 is_negative_review
 
--- delivery signals (later)
-delivery_days
-is_late_delivery
 */
 
 with orders as(
@@ -69,13 +66,19 @@ select
 
     -- reviews
     r.review_score,
-    case when r.review_score <= 3 then 1 else 0 end as is_negative_review,
+    case
+        when review_score is null then null
+        when review_score <= 3 then 1
+        else 0
+    end as is_negative_review,
 
     --deliveries,
     timestamp_diff(o.customer_delivery_date, o.purchase_timestamp, DAY) as days_to_delivery,
     timestamp_diff(o.estimated_delivery, o.purchase_timestamp, DAY) as estimated_delivery_days,
     timestamp_diff(o.delivered_carrier_date, o.purchase_timestamp, DAY) as days_to_carrier,
-    timestamp_diff(o.customer_delivery_date, o.delivered_carrier_date, DAY) as days_carrier_to_customer 
+    timestamp_diff(o.customer_delivery_date, o.delivered_carrier_date, DAY) as days_carrier_to_customer,
+    timestamp_diff(approved_at, purchase_timestamp, DAY) as days_to_approval, 
+    timestamp_diff(customer_delivery_date, estimated_delivery, DAY) as dayslate  -- negative if early, positive if late
 from orders o
 left join payments p on o.order_id = p.order_id
 left join reviews r on r.order_id = o.order_id
