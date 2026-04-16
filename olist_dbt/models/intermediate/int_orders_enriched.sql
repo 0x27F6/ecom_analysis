@@ -42,6 +42,12 @@ reviews as(
     from {{ref('int_order_reviews')}}
 ),
 
+customers as (
+    select 
+        customer_id,
+        customer_unique_id
+    from {{ref('stg_customers')}}
+),
 payments as(
     select 
         order_id,
@@ -55,6 +61,7 @@ payments as(
 select 
     o.order_id,
     o.customer_id,
+    c.customer_unique_id,
     o.status as order_status,
     o.purchase_timestamp as ordered_at,
 
@@ -78,8 +85,9 @@ select
     timestamp_diff(o.delivered_carrier_date, o.purchase_timestamp, DAY) as days_to_carrier,
     timestamp_diff(o.customer_delivery_date, o.delivered_carrier_date, DAY) as days_carrier_to_customer,
     timestamp_diff(approved_at, purchase_timestamp, DAY) as days_to_approval, 
-    timestamp_diff(customer_delivery_date, estimated_delivery, DAY) as dayslate  -- negative if early, positive if late
+    timestamp_diff(customer_delivery_date, estimated_delivery, DAY) as days_late  -- negative if early, positive if late
 from orders o
 left join payments p on o.order_id = p.order_id
 left join reviews r on r.order_id = o.order_id
+left join customers c on c.customer_id = o.customer_id
 
