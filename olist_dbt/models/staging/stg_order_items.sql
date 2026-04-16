@@ -10,7 +10,7 @@ select
     order_item_id,
     product_id,
     seller_id,
-    shipping_limit_date as seller_shipment_date,
+    shipping_limit_date,
     price,
     freight_value
 from source

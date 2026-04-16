@@ -31,7 +31,8 @@ order_items as(
         product_id,
         seller_id,
         price,
-        freight_value
+        freight_value,
+        shipping_limit_date
     from {{ref('stg_order_items')}}
 ),
 
@@ -65,6 +66,9 @@ select
     -- economics
     oi.price,
     oi.freight_value,
+
+    -- shipping
+    oi.shipping_limit_date,
 
     -- attributes 
     p.product_category,
