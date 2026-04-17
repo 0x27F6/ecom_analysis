@@ -41,7 +41,8 @@ select
     -- delivery context
     oe.days_to_carrier,
     oe.days_to_delivery,
-    oe.days_late -- positive value: early | negative_value:late
+    oe.days_late, -- positive value: early | negative_value:late
+    timestamp_diff(oe.delivered_carrier_date, oi.shipping_limit_date, DAY) as days_to_carrier_vs_sla -- positive value: early | negative_value:late
 
 from {{ref('int_items_enriched')}} oi
 left join {{ref('int_orders_enriched')}} oe on oe.order_id = oi.order_id
