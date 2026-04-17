@@ -50,6 +50,13 @@ select
     review_score,
     is_negative_review,
 
+    --timestamps 
+    purchase_timestamp,
+    approved_at,
+    delivered_carrier_date,
+    customer_delivery_date,
+    estimated_delivery,
+
     -- delivery metrics
     days_to_approval,
     days_to_carrier,
