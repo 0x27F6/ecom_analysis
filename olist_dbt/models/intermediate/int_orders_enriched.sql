@@ -79,7 +79,14 @@ select
         else 0
     end as is_negative_review,
 
-    --deliveries,
+    --timestamps 
+    o.purchase_timestamp,
+    o.approved_at,
+    o.delivered_carrier_date,
+    o.customer_delivery_date,
+    o.estimated_delivery,
+
+    --deliveries
     timestamp_diff(o.customer_delivery_date, o.purchase_timestamp, DAY) as days_to_delivery,
     timestamp_diff(o.estimated_delivery, o.purchase_timestamp, DAY) as estimated_delivery_days,
     timestamp_diff(o.delivered_carrier_date, o.purchase_timestamp, DAY) as days_to_carrier,
