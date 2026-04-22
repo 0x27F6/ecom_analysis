@@ -1,0 +1,36 @@
+# _marts__models.yml
+#
+# Schema tests and documentation for mart-layer models.
+#
+# Tests enforce grain assumptions (unique/not_null on primary keys),
+# foreign key integrity (relationships tests), and value constraints
+# (accepted_values on enum fields). Failures surface assumption drift
+# between raw data and the modeling layer.
+#
+# Notable caveat: dim_reviews.review_id is NOT unique. A single review
+# in the Olist dataset can span multiple orders (merchant bundling),
+# so order_id is the true primary key. Documented on the model directly.
+#
+# Test syntax uses the `arguments:` nesting introduced in dbt 1.8+.
+version: 2
+
+models:
+  - name: dim_reviews
+    description: Review dimension — latest review per order. Orders with multiple raw review submissions are deduplicated in the intermediate layer by most recent reviewed_at.
+    columns:
+      - name: order_id
+        description: Foreign key to fct_orders. Unique in this dim (one review per order).
+        tests:
+          - unique
+          - not_null
+      - name: review_id
+        description: Review identifier. NOT unique — a single review may span multiple orders (merchant bundling).
+        tests:
+          - not_null
+      - name: review_score
+        description: Score 1-5 given by customer.
+        tests:
+          - not_null
+          - accepted_values:
+              values: [1, 2, 3, 4, 5]
+              quote: false
